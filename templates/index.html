@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>tornado WebSocket example</title>
+  <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
+  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <span id="status"></span>
+    <form id="form_msg" method="post" action="/api">
+        {% module xsrf_form_html() %}
+        <input type="text" name="msg">
+        <input type="submit">
+    </form>
+    <div id="msgs">
+        <ul >
+          {% for msg in msgs %}
+              <li>{{ escape(msg) }}</li>
+          {% end %}
+        </ul>
+    </div>
+  </div>
+  <script>
+
+    // Attach a submit handler to the form
+    $( "#form_msg" ).submit(function( event ) {
+
+      // Stop form from submitting normally
+      event.preventDefault();
+
+        $.post( "/api", $( this ).serialize() )
+          .done(function( data ) {
+            // alert( "Data Loaded: " + data );
+          });
+    });
+
+
+    var $status = $('#status');
+    var ws = new WebSocket('ws://localhost:8888/ws');
+
+    ws.onopen = function(){
+      $status.attr("class", 'label label-success');
+      $status.text('open');
+    };
+    ws.onmessage = function(ev){
+      $status.attr("class", 'label label-info');
+      $status.hide();
+      $status.fadeIn("slow");
+      $status.text('received');
+
+      var json = JSON.parse(ev.data);
+      $("#msgs ul").append('<li>'+json.msg+'</li>');
+
+    };
+    ws.onclose = function(ev){
+      $message.attr("class", 'label label-important');
+      $message.text('closed');
+    };
+    ws.onerror = function(ev){
+      $message.attr("class", 'label label-warning');
+      $message.text('error occurred');
+    };
+  </script>
+</body>
+</html>
